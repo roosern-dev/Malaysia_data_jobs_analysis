@@ -1,5 +1,7 @@
 from threading import local
 from tkinter.messagebox import NO
+from cv2 import merge
+import sklearn
 import streamlit as st
 import pandas as pd
 import seaborn as sns 
@@ -25,9 +27,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import nltk
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+import pickle
+
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
@@ -43,7 +44,21 @@ results = st.container()
 if 'predicted_salary' not in st.session_state:
     st.session_state.predicted_salary = 0
 
+@st.cache
+def get_data_model():
+    clean_path = r"C:\Users\ryeoh\Project\Malaysia_data_jobs_analysis\data\inferencing.ftr"
+    df_data_jobs_clean_description = pd.read_feather(clean_path)
+    return df_data_jobs_clean_description
 
+@st.cache
+def get_vec_count1(df:pd.DataFrame):
+    vec_count1 = CountVectorizer(ngram_range=(1,1), max_features=50).fit(df['job_requirement'].tolist())
+    return vec_count1
+
+@st.cache
+def get_vec_count2(df:pd.DataFrame):
+    vec_count2 = CountVectorizer(ngram_range=(2,2), max_features=50).fit(df['job_requirement'].tolist())
+    return vec_count2
 
 @st.cache
 def setup():
@@ -54,6 +69,14 @@ def setup():
 
     vec_count1 = CountVectorizer(ngram_range=(1,1), max_features=50).fit(df_data_jobs_clean_description['job_requirement'].tolist())
     vec_count2 = CountVectorizer(ngram_range=(2,2), max_features=50).fit(df_data_jobs_clean_description['job_requirement'].tolist())
+
+@st.cache
+def load_model():
+    filename=r"C:\Users\ryeoh\Project\Malaysia_data_jobs_analysis\data\model.sav"
+    loaded_model = pickle.load(open(filename, 'rb'))
+    return loaded_model
+    
+
 
 
 def cleanData(raw_text):    
@@ -173,12 +196,38 @@ def cleanData(raw_text):
     for w in wordsFiltered:
         str = str+' '+w.lower()
     return str
+
+
+
+def format_data(df_training:pd.DataFrame, df_description_tokenized:pd.DataFrame):
+    df_training.drop(['job_id', 'job_title', 'job_description', 'job_specialization', 'company_name','company_registration', 'job_link', 'search_term', 'clean_job_description', 'job_requirement','start_salary_range','end_salary_range','median_salary'], inplace=True, axis=1)
+    categories={'Not Specified':0,'Non-Executive':1,'Entry Level':2,'Junior Executive':3,'Senior Executive':4,'Manager':5, 'Senior Manager':6}
+    df_training['job_level'] = df_training['job_level'].map(categories)
+    job_types = ['Contract', 'Full-Time', 'Full-Time, Internship', 'Internship' ,'Part-Time', 'Temporary']
+    df_job_type = pd.get_dummies(df_training['job_type'])
+    df_training_en = df_training.join(df_job_type).drop('job_type',axis=1)
+    company_sizes = {'1 - 50 Employees':0,'51 - 200 Employees':1,'201 - 500 Employees':2, '501 - 1000 Employees':3,'1001 - 2000 Employees':4,'2001 - 5000 Employees':5, 'More than 5000 Employees':6 }
+    df_training_en['company_size'] = df_training_en['company_size'].map(company_sizes)
+    df_states = pd.get_dummies(df_training_en['state'])
+    df_training_en = df_training_en.drop('state',axis=1).join(df_states)
+    df_industry = pd.get_dummies(df_training_en['company_industry'])
+    df_training_en = df_training_en.drop('company_industry',axis=1).join(df_industry)
+    df_training_full = df_training_en.join(df_description_tokenized)
+    df_ready_training = df_training_full.drop(['qualifications', 'no_salary'], axis=1)
+    df_ready_training.dropna(inplace=True)
+
+    return df_ready_training
         
 
 
 
-def main(wage=0):
+def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVectorizer, ML_model:sklearn.base.BaseEstimator):
+    vec_1gram = vec_1gram
+    vec_2gram = vec_2gram
     print("running")
+    if 'job_locations' not in st.session_state:
+        st.session_state.job_locations = data_model.state.unique().tolist()
+
     number = 0
     with header:
         st.title("How much should you be paid, working in Data Science in Malaysia?")
@@ -190,7 +239,7 @@ def main(wage=0):
         experience = st.number_input("Your years of experience", step=1, on_change=None, max_value=20)
         state = st.selectbox('Job location', st.session_state.job_locations, on_change=None)
         desired_job = st.selectbox("Preferred job", ['None','Data Scientist', 'Data Engineer', 'Data Analyst'], on_change=None)
-        desc = st.text_input("Description", on_change=None)
+        desc = st.text_input("Write a brief description of your skillsets here", on_change=None)
         
         
             
@@ -202,6 +251,7 @@ def main(wage=0):
             categories = {'Not Specified':0,'Non-Executive':1,'Entry Level':2,'Junior Executive':3,'Senior Executive':4,'Manager':5, 'Senior Manager':6}
             job_level_categories = {x[1]:x[0] for x in categories.items()}
 
+            job_description = cleanData(desc)
             job_level=0
             if experience<2:
                 job_level=2
@@ -218,31 +268,57 @@ def main(wage=0):
 
             job_level_cat = job_level_categories[job_level]
 
-            '''
-            input = {
-            'job_description',
+            data_job_type = {"is_data_scientist":0, "is_data_engineer":0, "is_data_analyst":0}
+            if(desired_job == "Data Scientist"):
+                data_job_type['is_data_scientist'] = 1
+            elif(desired_job == "Data Engineer"):
+                data_job_type['is_data_engineer'] = 1
+            elif(desired_job == "Data Analyst"):
+                data_job_type['is_data_analyst']=1
+
+            count1_vector = vec_1gram.transform([job_description])
+            count2_vector = vec_2gram.transform([job_description])
+
+            df_count1 = pd.DataFrame(count1_vector.A, columns=vec_1gram.get_feature_names())
+            df_count2 = pd.DataFrame(count2_vector.A, columns=vec_2gram.get_feature_names())
+            df_description_tokenized = pd.concat([df_count1,df_count2], axis=1)
+            df_description_tokenized = df_description_tokenized.applymap(lambda x: 1 if x>0 else 0)
+
+            
+            input_data = {'job_description':None,
             'job_level':job_level_cat,
             'experience':experience,
             'job_type' :'Full-Time',
             'qualifications':"Bachelor's Degree, Post Graduate Diploma, Professional Degree, Master's Degree",
-            'job_specialization':"Computer / Information Technology (Software)",
-            'company_name',
-            'company_registration',
+            'job_specialization':"Computer/Information Technology, IT-Software",
+            'company_name':None,
+            'company_registration':None,
             'company_size':"1 - 50 Employees",
-            'company_industry',
-            'job_link',
-            'search_term',
-            'state',
-            'start_salary_range',
-            'end_salary_range',
-            'median_salary',
-            'no_salary',
-            'clean_job_description',
-            'job_requirement',
-            'is_data_scientist',
-            'is_data_engineer',
-            'is_data_analyst'}
-            '''
+            'company_industry':'Computer / Information Technology (Software)',
+            'job_link':None,
+            'search_term':None,
+            'state':state,
+            'start_salary_range':0,
+            'end_salary_range':0,
+            'median_salary':0,
+            'no_salary':None,
+            'clean_job_description':None,
+            'job_requirement':None}
+            input_data.update(data_job_type)
+
+            
+            df_input =pd.DataFrame(input_data, index=[0])
+            df_joined = pd.concat([data_model.copy(),df_input])
+            
+            #df_joined.drop(['job_id', 'job_title', 'job_description', 'job_specialization', 'company_name','company_registration', 'job_link', 'search_term', 'clean_job_description', 'job_requirement'], inplace=True, axis=1)
+            #print(df_joined.tail(1))
+            df_inference = format_data(df_joined, df_description_tokenized)
+            print(df_inference.tail(1).values.tolist())
+            prediction = ML_model.predict(df_inference.tail(1).values.tolist())
+            print(prediction)
+            st.session_state.predicted_salary = round(prediction[0])
+        
+            
 
             
 
@@ -256,5 +332,9 @@ def main(wage=0):
 
 
 if __name__ =="__main__":
-    setup()
-    main()
+    data_model = get_data_model()
+    vec_1gram = get_vec_count1(data_model)
+    vec_2gram = get_vec_count2(data_model)
+    ML_model = load_model()
+
+    main(data_model, vec_1gram, vec_2gram, ML_model)
