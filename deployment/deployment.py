@@ -291,7 +291,7 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
     number = 0
     with header:
         st.title("How much should you be paid, working in Data Science in Malaysia?")
-        st.caption("Predicting how much you should be fairly paid.                         by Ru Sern")
+        st.subheader("Predicting how much you should be fairly paid.                         by Ru Sern")
 
     with inference:
         st.write("#")
@@ -408,25 +408,34 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         st.write("#")
         st.write("#")
         
-        st.header('Which state has the most data jobs?')
+        st.title('Which state has the most data jobs?')
         st.write('#')
-        st.title(r'>50% in Klang Valley')
+        st.subheader(r'>50% in Klang Valley')
         st.image(visualizations['states'])
 
         st.write("#")
         st.write("#")
 
-        st.header('which industry hires the most data science peeps?')
+        st.title('which industry hires the most data science peeps?')
+        st.write("#")
+        st.subheader(r'50% in the top 5 industries')
+        st.write("#")
         st.image(visualizations['industry'])
         st.write("#")
         st.write("#")
 
         st.title('which state pays the highest?')
+        st.write("#")
+        st.subheader(r'The Klang Valley, with anomalies in Negeri Sembilan')
+        st.write("#")
         st.image(visualizations['salary'])
         st.write("#")
         st.write("#")
 
         st.title('do bigger companies pay more?')
+        st.write("#")
+        st.subheader(r'Not quite.')
+        st.write("#")
         st.image(visualizations['company'])
     
 
