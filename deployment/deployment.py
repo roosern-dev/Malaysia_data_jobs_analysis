@@ -28,6 +28,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import nltk
 import pickle
+from PIL import Image
 
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
@@ -39,6 +40,7 @@ dataset = st.container()
 features = st.container()
 inference = st.container()
 results = st.container()
+visual = st.container()
 
 
 if 'predicted_salary' not in st.session_state:
@@ -46,7 +48,7 @@ if 'predicted_salary' not in st.session_state:
 
 @st.cache
 def get_data_model():
-    clean_path = r"C:\Users\ryeoh\Project\Malaysia_data_jobs_analysis\data\inferencing.ftr"
+    clean_path = r"./data/inferencing.ftr"
     df_data_jobs_clean_description = pd.read_feather(clean_path)
     return df_data_jobs_clean_description
 
@@ -62,7 +64,7 @@ def get_vec_count2(df:pd.DataFrame):
 
 @st.cache
 def setup():
-    clean_path = r"C:\Users\ryeoh\Project\Malaysia_data_jobs_analysis\data\inferencing.ftr"
+    clean_path = r"./data/inferencing.ftr"
     df_data_jobs_clean_description = pd.read_feather(clean_path)
     st.session_state.data_model = df_data_jobs_clean_description
     st.session_state.job_locations = df_data_jobs_clean_description.state.unique().tolist()
@@ -72,11 +74,60 @@ def setup():
 
 @st.cache
 def load_model():
-    filename=r"C:\Users\ryeoh\Project\Malaysia_data_jobs_analysis\data\model.sav"
+    filename=r"./data/model.sav"
     loaded_model = pickle.load(open(filename, 'rb'))
     return loaded_model
     
+@st.cache(suppress_st_warning=True)
+def get_visualizations(df_data_jobs:pd.DataFrame):
+    '''
+    df_data_jobs = df_data_jobs[df_data_jobs['median_salary']<30000]
 
+    df_jobs_by_state = df_data_jobs.groupby('state').size().sort_values()
+    sns.set(rc={'figure.figsize':(20,20)})
+    sns.set(font_scale=2)
+
+    sns.set_palette('Reds')
+    bar_states = sns.barplot(df_jobs_by_state.index, df_jobs_by_state.values)
+    bar_states.set_title("Distribution of jobs by state", fontsize=40)
+    bar_states.set_ylabel("Number of jobs", fontsize=20)
+    bar_states.set_xlabel("States", fontsize=20)
+    bar_states.bar_label(bar_states.containers[0])
+    bar_states.tick_params(axis='x', rotation=90)
+
+    df_jobs_by_industry = df_data_jobs.groupby('company_industry').size().sort_values()
+    sns.set(rc={'figure.figsize':(20,20)})
+    bar_industry = sns.barplot(df_jobs_by_industry.index, df_jobs_by_industry.values)
+    bar_industry.set_title("Distribution of jobs by industry", fontsize=40)
+    bar_industry.set_ylabel("Number of jobs", fontsize=20)
+    bar_industry.set_xlabel("Industry", fontsize=20)
+    bar_industry.tick_params(axis='x', rotation=90)
+    bar_industry.bar_label(bar_industry.containers[0])
+
+    df_median_salary_by_state = df_data_jobs.groupby('state')['median_salary'].median()
+    sns.set(rc={'figure.figsize':(20,20)})
+    sns.set(font_scale=2)
+    ax_salary = sns.swarmplot(data=df_data_jobs, x="state", y="median_salary", color=".2")
+    ax_salary = sns.boxplot(data= df_data_jobs, x="state", y="median_salary")
+    ax_salary.set_title("Salary by state", fontsize=40)
+    sns.set(font_scale=2)
+    ax_salary.tick_params(axis='x', rotation=90)
+
+    ax_salary.set_yticks(range(0,200000,4000))
+
+    ax_company = sns.swarmplot(data=df_data_jobs, x="company_size", y="median_salary", color=".2")
+    ax_company = sns.boxplot(data=df_data_jobs, x="company_size", y="median_salary")
+    ax_company.tick_params(axis='x', rotation=90)
+    ax_company.set_title("Salary by company size", fontsize=40)
+    '''
+
+    ''''''
+    bar_states = Image.open(r"./images/distribution_of_jobs_by_state.png")
+    bar_industry = Image.open(r"./images/distribution_of_jobs_by_industry.png")
+    ax_salary = Image.open(r"./images/median_salary_by_state_swarm.png")
+    ax_company = Image.open(r"./images/salary_by_company_size.png")
+
+    return {'states':bar_states, 'industry':bar_industry, 'salary':ax_salary, 'company':ax_company}
 
 
 def cleanData(raw_text):    
@@ -221,7 +272,7 @@ def format_data(df_training:pd.DataFrame, df_description_tokenized:pd.DataFrame)
 
 
 
-def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVectorizer, ML_model:sklearn.base.BaseEstimator):
+def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVectorizer, ML_model:sklearn.base.BaseEstimator, visualizations:dict):
     vec_1gram = vec_1gram
     vec_2gram = vec_2gram
     print("running")
@@ -326,6 +377,23 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         st.title('Your recommended salary is: ')
         st.title(f'RM{st.session_state.predicted_salary}')
 
+
+    #{'states':bar_states, 'industry':bar_industry, 'salary':ax_salary, 'company':ax_company}
+    
+    with visual:
+        st.title('Which state has the most data jobs?')
+        st.image(visualizations['states'])
+
+        st.title('which industry hires the most data science peeps?')
+        st.image(visualizations['industry'])
+
+        st.title('which state pays the highest?')
+        st.image(visualizations['salary'])
+
+        st.title('do bigger companies pay more?')
+        st.image(visualizations['company'])
+    
+
         
 
 
@@ -336,5 +404,6 @@ if __name__ =="__main__":
     vec_1gram = get_vec_count1(data_model)
     vec_2gram = get_vec_count2(data_model)
     ML_model = load_model()
+    visualizations = get_visualizations(data_model)
 
-    main(data_model, vec_1gram, vec_2gram, ML_model)
+    main(data_model, vec_1gram, vec_2gram, ML_model, visualizations)
