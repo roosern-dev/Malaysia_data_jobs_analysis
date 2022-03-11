@@ -348,6 +348,8 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
             df_count2 = pd.DataFrame(count2_vector.A, columns=vec_2gram.get_feature_names())
             df_description_tokenized = pd.concat([df_count1,df_count2], axis=1)
             df_description_tokenized = df_description_tokenized.applymap(lambda x: 1 if x>0 else 0)
+            if selected_company_size == None:
+                selected_company_size = '1 - 50 Employees'
 
             
             input_data = {'job_description':None,
