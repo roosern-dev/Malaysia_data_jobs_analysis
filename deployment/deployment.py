@@ -291,12 +291,12 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
     number = 0
     with header:
         st.title("How much should you be paid, working in Data Science in Malaysia?")
-        st.text("Predicting how much you should be fairly paid.                         by Ru Sern")
+        st.caption("Predicting how much you should be fairly paid.                         by Ru Sern")
 
     with inference:
         st.write("#")
         st.write("#")
-        st.title("Predict your fair wage!")
+        st.header("Predict your fair wage!")
         experience = st.number_input("Your years of experience", step=1, on_change=None, max_value=20)
         state = st.selectbox('Job location', st.session_state.job_locations, on_change=None)
         desired_job = st.selectbox("Preferred job", ['None','Data Scientist', 'Data Engineer', 'Data Analyst'], on_change=None)
@@ -392,7 +392,7 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
 
         st.button("Calculate!", on_click=run_inference)
         st.write("#")
-        st.title('Your recommended salary is: ')
+        st.header('Your recommended salary is: ')
         st.title(f'RM{st.session_state.predicted_salary}')
 
 
@@ -408,13 +408,15 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         st.write("#")
         st.write("#")
         
-        st.title('Which state has the most data jobs?')
+        st.header('Which state has the most data jobs?')
+        st.write('#')
+        st.title(r'>50% in Klang Valley')
         st.image(visualizations['states'])
 
         st.write("#")
         st.write("#")
 
-        st.title('which industry hires the most data science peeps?')
+        st.header('which industry hires the most data science peeps?')
         st.image(visualizations['industry'])
         st.write("#")
         st.write("#")
