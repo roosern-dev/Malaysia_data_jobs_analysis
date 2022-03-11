@@ -389,7 +389,6 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         st.write("#")
         st.write("#")
         st.write("#")
-        st.write("#")
 
         st.title('Some facts to aid your job hunt.')
         st.write("#")
