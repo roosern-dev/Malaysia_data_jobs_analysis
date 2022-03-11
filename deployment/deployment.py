@@ -1,3 +1,4 @@
+from random import sample
 from threading import local
 import sklearn
 import streamlit as st
@@ -293,7 +294,10 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         experience = st.number_input("Your years of experience", step=1, on_change=None, max_value=20)
         state = st.selectbox('Job location', st.session_state.job_locations, on_change=None)
         desired_job = st.selectbox("Preferred job", ['None','Data Scientist', 'Data Engineer', 'Data Analyst'], on_change=None)
-        desc = st.text_input("Write a brief description of your skillsets here", on_change=None)
+
+        sample_input = "I am a recent data science graduate from Forward School. I have experience building data analytics projects employing machine learning, deep learning, and big data. I have experience in scraping my own data and data mining. I can proficient in python. I also know pandas and sklearn."
+
+        desc = st.text_input("Write a brief description of your skillsets here", on_change=None, value=sample_input)
         
         
             
