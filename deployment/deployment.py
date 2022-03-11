@@ -284,10 +284,11 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
     number = 0
     with header:
         st.title("How much should you be paid, working in Data Science in Malaysia?")
-        st.text("Predicting how much you should be fairly paid.")
+        st.text("Predicting how much you should be fairly paid.                         by Ru Sern")
 
     with inference:
-        
+        st.write("#")
+        st.write("#")
         st.title("Predict your fair wage!")
         experience = st.number_input("Your years of experience", step=1, on_change=None, max_value=20)
         state = st.selectbox('Job location', st.session_state.job_locations, on_change=None)
@@ -383,14 +384,21 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
     #{'states':bar_states, 'industry':bar_industry, 'salary':ax_salary, 'company':ax_company}
     
     with visual:
+        st.write("#")
+        st.write("#")
+        st.write("#")
         st.title('Which state has the most data jobs?')
         st.image(visualizations['states'])
 
+        st.write("#")
+
         st.title('which industry hires the most data science peeps?')
         st.image(visualizations['industry'])
+        st.write("#")
 
         st.title('which state pays the highest?')
         st.image(visualizations['salary'])
+        st.write("#")
 
         st.title('do bigger companies pay more?')
         st.image(visualizations['company'])
