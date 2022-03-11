@@ -377,6 +377,7 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
             
 
         st.button("Calculate!", on_click=run_inference)
+        st.write("#")
         st.title('Your recommended salary is: ')
         st.title(f'RM{st.session_state.predicted_salary}')
 
@@ -391,13 +392,16 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         st.image(visualizations['states'])
 
         st.write("#")
+        st.write("#")
 
         st.title('which industry hires the most data science peeps?')
         st.image(visualizations['industry'])
         st.write("#")
+        st.write("#")
 
         st.title('which state pays the highest?')
         st.image(visualizations['salary'])
+        st.write("#")
         st.write("#")
 
         st.title('do bigger companies pay more?')
