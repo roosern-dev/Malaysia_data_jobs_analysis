@@ -282,6 +282,12 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
     if 'job_locations' not in st.session_state:
         st.session_state.job_locations = data_model.state.unique().tolist()
 
+    if "job_type" not in st.session_state:
+        st.session_state.job_type = data_model.job_type.unique().tolist()
+
+    if "company_size" not in st.session_state:
+        st.session_state.company_size = data_model.company_size.unique().tolist()
+
     number = 0
     with header:
         st.title("How much should you be paid, working in Data Science in Malaysia?")
@@ -294,6 +300,7 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
         experience = st.number_input("Your years of experience", step=1, on_change=None, max_value=20)
         state = st.selectbox('Job location', st.session_state.job_locations, on_change=None)
         desired_job = st.selectbox("Preferred job", ['None','Data Scientist', 'Data Engineer', 'Data Analyst'], on_change=None)
+        selected_company_size = st.selectbox("Preferred company size", st.session_state.company_size, on_change=None)
 
         sample_input = "I am a recent data science graduate from Forward School. I have experience building data analytics projects employing machine learning, deep learning, and big data. I have experience in scraping my own data and data mining. I can proficient in python. I also know pandas and sklearn."
 
@@ -351,7 +358,7 @@ def main(data_model:pd.DataFrame, vec_1gram:CountVectorizer, vec_2gram:CountVect
             'job_specialization':"Computer/Information Technology, IT-Software",
             'company_name':None,
             'company_registration':None,
-            'company_size':"1 - 50 Employees",
+            'company_size':selected_company_size,
             'company_industry':'Computer / Information Technology (Software)',
             'job_link':None,
             'search_term':None,
