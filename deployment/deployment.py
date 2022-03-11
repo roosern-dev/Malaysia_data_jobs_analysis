@@ -32,6 +32,10 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
 
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
 
 header = st.container()
 dataset = st.container()
