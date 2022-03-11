@@ -1,6 +1,4 @@
 from threading import local
-from tkinter.messagebox import NO
-from cv2 import merge
 import sklearn
 import streamlit as st
 import pandas as pd
